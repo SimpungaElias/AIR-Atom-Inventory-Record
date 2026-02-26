@@ -52,6 +52,11 @@ SOURCES += \
 
 RESOURCES += resources.qrc
 
+# --- THE FIX: Build a Universal Mac App (Intel + Apple Silicon) ---
+macx {
+    QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64
+}
+
 # Output Setup
 DESTDIR = bin
 OBJECTS_DIR = build/obj
