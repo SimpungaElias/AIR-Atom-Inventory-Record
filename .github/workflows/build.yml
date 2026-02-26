@@ -23,13 +23,20 @@ jobs:
       with:
         python-version: '3.11'
 
+    # --- THE FIX: Wake up Microsoft Visual C++ for Windows ---
+    - name: Setup MSVC Compiler
+      if: runner.os == 'Windows'
+      uses: ilammy/msvc-dev-cmd@v1
+    # ---------------------------------------------------------
+
     - name: Install Qt 6
       uses: jurplel/install-qt-action@v3
       with:
         version: '6.5.3' 
         host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'mac' || 'linux' }}
         target: 'desktop'
-        arch: ${{ runner.os == 'Windows' && 'win64_mingw' || '' }} 
+        # Tell Qt to use MSVC instead of MinGW
+        arch: ${{ runner.os == 'Windows' && 'win64_msvc2019_64' || '' }} 
         setup-python: 'false' 
 
     - name: Build on Linux & macOS
@@ -41,6 +48,5 @@ jobs:
     - name: Build on Windows
       if: runner.os == 'Windows'
       run: |
-        New-Item -ItemType Directory -Force -Path release
         qmake
-        mingw32-make
+        nmake
