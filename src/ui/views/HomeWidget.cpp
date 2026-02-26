@@ -4,6 +4,11 @@
 #include <QSqlQuery>
 #include <QCryptographicHash> // <--- REQUIRED
 #include <QColor>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QtMath>
 
 HomeWidget::HomeWidget(QWidget *parent) : QWidget(parent) {
     setupUI();
