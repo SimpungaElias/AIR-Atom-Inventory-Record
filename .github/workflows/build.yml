@@ -53,3 +53,9 @@ jobs:
         # 3. Compile!
         qmake
         mingw32-make -j4
+    # --- THE FINAL REWARD: Save the compiled app so you can download it! ---
+    - name: Upload Application Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: AIR-Simulator-${{ matrix.os }}
+        path: bin/
