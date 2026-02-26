@@ -21,10 +21,10 @@ jobs:
     - name: Install Qt 6
       uses: jurplel/install-qt-action@v3
       with:
-        version: '6.5.3' 
+        version: '6.5.3'
         host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'mac' || 'linux' }}
         target: 'desktop'
-        arch: ${{ runner.os == 'Windows' && 'win64_mingw' || '' }} 
+        arch: ${{ runner.os == 'Windows' && 'win64_mingw' || '' }}
 
     # ==========================================
     # 1. LINUX: Build & Create an AppImage
@@ -42,13 +42,17 @@ jobs:
         wget -q -O linuxdeployqt.AppImage "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
         chmod +x linuxdeployqt.AppImage
 
-        # --- THE FIX: Create the files in the ROOT folder, not bin/ ---
-        echo -e "[Desktop Entry]\nName=AIR Simulator\nExec=AIR\nIcon=air\nType=Application\nCategories=Utility;" > AIR.desktop
-        touch air.png
-        # --------------------------------------------------------------
+        # --- THE FIX: Create a strict AppDir container so it can't get lost ---
+        mkdir -p AppDir/usr/bin
+        cp bin/AIR AppDir/usr/bin/
 
-        # Run the tool to bundle libraries and create a double-clickable .AppImage
-        ./linuxdeployqt.AppImage bin/AIR -unsupported-allow-new-glibc -appimage
+        echo -e "[Desktop Entry]\nName=AIR Simulator\nExec=AIR\nIcon=air\nType=Application\nCategories=Utility;" > AppDir/AIR.desktop
+        touch AppDir/air.png
+
+        export VERSION=1.0.0
+
+        # Run the tool on our isolated AppDir container
+        ./linuxdeployqt.AppImage AppDir/usr/bin/AIR -unsupported-allow-new-glibc -appimage
 
         # Move the finished AppImage into the bin folder so GitHub saves it
         mv AIR*.AppImage bin/ || true
