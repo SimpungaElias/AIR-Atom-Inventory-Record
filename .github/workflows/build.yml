@@ -18,12 +18,10 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    # --- THE FIX: Install a real Python environment to bypass the Windows Store bug ---
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    # ---------------------------------------------------------------------------------
 
     - name: Install Qt 6
       uses: jurplel/install-qt-action@v3
@@ -32,6 +30,7 @@ jobs:
         host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'mac' || 'linux' }}
         target: 'desktop'
         arch: ${{ runner.os == 'Windows' && 'win64_mingw' || '' }} 
+        setup-python: 'false' 
 
     - name: Build on Linux & macOS
       if: runner.os != 'Windows'
