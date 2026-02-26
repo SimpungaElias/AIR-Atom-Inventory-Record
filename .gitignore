@@ -1,0 +1,21 @@
+# Qt generated files
+Makefile
+*.o
+*.obj
+*.exe
+*.app
+*.dmg
+*.AppImage
+
+# Build directories
+build/
+release/
+debug/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Database (Users must start fresh)
+air_inventory.db
+/tmp/*.sqlite
