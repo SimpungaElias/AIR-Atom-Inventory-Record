@@ -32,10 +32,8 @@ jobs:
     - name: Build & Bundle on Ubuntu
       if: runner.os == 'Linux'
       run: |
-        # --- THE FIX: Install the missing XCB cursor library on the Ubuntu server ---
         sudo apt-get update
         sudo apt-get install -y libxcb-cursor0
-        # ----------------------------------------------------------------------------
 
         qmake
         make -j4
@@ -44,9 +42,10 @@ jobs:
         wget -q -O linuxdeployqt.AppImage "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
         chmod +x linuxdeployqt.AppImage
 
-        # Create dummy desktop/icon files so the packager doesn't complain
-        echo -e "[Desktop Entry]\nName=AIR Simulator\nExec=AIR\nIcon=air\nType=Application\nCategories=Utility;" > bin/AIR.desktop
-        touch bin/air.png
+        # --- THE FIX: Create the files in the ROOT folder, not bin/ ---
+        echo -e "[Desktop Entry]\nName=AIR Simulator\nExec=AIR\nIcon=air\nType=Application\nCategories=Utility;" > AIR.desktop
+        touch air.png
+        # --------------------------------------------------------------
 
         # Run the tool to bundle libraries and create a double-clickable .AppImage
         ./linuxdeployqt.AppImage bin/AIR -unsupported-allow-new-glibc -appimage
@@ -64,7 +63,7 @@ jobs:
       run: |
         qmake
         make -j4
-        
+
         # Use Qt's built-in Mac tool to bundle Frameworks and create a .dmg
         macdeployqt bin/AIR.app -dmg
 
@@ -77,10 +76,10 @@ jobs:
       run: |
         export PATH="${GITHUB_WORKSPACE}/Qt/Tools/mingw1120_64/bin:$PATH"
         mkdir -p bin build/obj build/moc
-        
+
         qmake
         mingw32-make -j4
-        
+
         # Use Qt's built-in Windows tool to pull all required DLLs into the bin folder
         windeployqt bin/AIR.exe
 
