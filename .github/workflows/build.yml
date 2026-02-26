@@ -32,20 +32,25 @@ jobs:
     - name: Build & Bundle on Ubuntu
       if: runner.os == 'Linux'
       run: |
+        # --- THE FIX: Install the missing XCB cursor library on the Ubuntu server ---
+        sudo apt-get update
+        sudo apt-get install -y libxcb-cursor0
+        # ----------------------------------------------------------------------------
+
         qmake
         make -j4
-        
+
         # Download the Linux deployment tool
         wget -q -O linuxdeployqt.AppImage "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
         chmod +x linuxdeployqt.AppImage
-        
+
         # Create dummy desktop/icon files so the packager doesn't complain
         echo -e "[Desktop Entry]\nName=AIR Simulator\nExec=AIR\nIcon=air\nType=Application\nCategories=Utility;" > bin/AIR.desktop
         touch bin/air.png
-        
+
         # Run the tool to bundle libraries and create a double-clickable .AppImage
         ./linuxdeployqt.AppImage bin/AIR -unsupported-allow-new-glibc -appimage
-        
+
         # Move the finished AppImage into the bin folder so GitHub saves it
         mv AIR*.AppImage bin/ || true
 
