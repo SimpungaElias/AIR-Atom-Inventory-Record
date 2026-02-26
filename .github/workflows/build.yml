@@ -1,0 +1,41 @@
+name: Build AIR Simulator
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # THE FIX: We use older environments to ensure maximum backward compatibility!
+        os: [ubuntu-22.04, windows-latest, macos-12]
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install Qt 6
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.3' # THE FIX: Upgraded to Qt 6 LTS
+        host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'mac' || 'linux' }}
+        target: 'desktop'
+        # Ensures Windows uses the MinGW compiler to match our Make commands below
+        arch: ${{ runner.os == 'Windows' && 'win64_mingw' || '' }} 
+
+    - name: Build on Linux & macOS
+      if: runner.os != 'Windows'
+      run: |
+        qmake
+        make -j4
+
+    - name: Build on Windows
+      if: runner.os == 'Windows'
+      run: |
+        qmake
+        mingw32-make -j4
