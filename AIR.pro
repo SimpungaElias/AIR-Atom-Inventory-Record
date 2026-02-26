@@ -53,6 +53,6 @@ SOURCES += \
 RESOURCES += resources.qrc
 
 # Output Setup
-#DESTDIR = bin
-#OBJECTS_DIR = build/obj
-#MOC_DIR = build/moc
+DESTDIR = bin
+OBJECTS_DIR = build/obj
+MOC_DIR = build/moc

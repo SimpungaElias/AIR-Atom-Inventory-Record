@@ -12,21 +12,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # THE FIX 1: We use the fast, available queues!
+        # We use the absolute fastest servers available!
         os: [ubuntu-22.04, windows-latest, macos-latest]
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
-
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Setup MSVC Compiler
-      if: runner.os == 'Windows'
-      uses: ilammy/msvc-dev-cmd@v1
 
     - name: Install Qt 6
       uses: jurplel/install-qt-action@v3
@@ -34,21 +25,31 @@ jobs:
         version: '6.5.3' 
         host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'mac' || 'linux' }}
         target: 'desktop'
-        arch: ${{ runner.os == 'Windows' && 'win64_msvc2019_64' || '' }} 
-        setup-python: 'false' 
+        arch: ${{ runner.os == 'Windows' && 'win64_mingw' || '' }} 
 
-    - name: Build on Linux & macOS
-      if: runner.os != 'Windows'
+    - name: Build on Ubuntu
+      if: runner.os == 'Linux'
+      run: |
+        qmake
+        make -j4
+
+    - name: Build on macOS
+      if: runner.os == 'macOS'
       env:
-        # THE FIX 2: This forces the new Mac server to make the app backward-compatible for older Macs!
-        MACOSX_DEPLOYMENT_TARGET: "11.0" 
+        # Apple requires this to ensure it works on older MacBooks
+        MACOSX_DEPLOYMENT_TARGET: "11.0"
       run: |
         qmake
         make -j4
 
     - name: Build on Windows
       if: runner.os == 'Windows'
-      shell: cmd
+      shell: bash
       run: |
+        # 1. Force GitHub to use the official Qt MinGW compiler, NOT the generic Windows one!
+        export PATH="${GITHUB_WORKSPACE}/Qt/Tools/mingw1120_64/bin:$PATH"
+        # 2. Create the exact folders your .pro file asks for
+        mkdir -p bin build/obj build/moc
+        # 3. Compile!
         qmake
-        nmake
+        mingw32-make -j4
