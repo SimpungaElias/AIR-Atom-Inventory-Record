@@ -12,8 +12,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # THE FIX: Pin Windows to 2019 to perfectly match the Qt compiler!
-        os: [ubuntu-22.04, windows-2019, macos-12]
+        # THE FIX 1: We use the fast, available queues!
+        os: [ubuntu-22.04, windows-latest, macos-latest]
 
     steps:
     - name: Checkout Code
@@ -39,6 +39,9 @@ jobs:
 
     - name: Build on Linux & macOS
       if: runner.os != 'Windows'
+      env:
+        # THE FIX 2: This forces the new Mac server to make the app backward-compatible for older Macs!
+        MACOSX_DEPLOYMENT_TARGET: "11.0" 
       run: |
         qmake
         make -j4
