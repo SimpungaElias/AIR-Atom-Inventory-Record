@@ -12,7 +12,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # We use the absolute fastest servers available!
         os: [ubuntu-22.04, windows-latest, macos-latest]
 
     steps:
@@ -27,33 +26,62 @@ jobs:
         target: 'desktop'
         arch: ${{ runner.os == 'Windows' && 'win64_mingw' || '' }} 
 
-    - name: Build on Ubuntu
+    # ==========================================
+    # 1. LINUX: Build & Create an AppImage
+    # ==========================================
+    - name: Build & Bundle on Ubuntu
       if: runner.os == 'Linux'
       run: |
         qmake
         make -j4
+        
+        # Download the Linux deployment tool
+        wget -q -O linuxdeployqt.AppImage "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+        chmod +x linuxdeployqt.AppImage
+        
+        # Create dummy desktop/icon files so the packager doesn't complain
+        echo -e "[Desktop Entry]\nName=AIR Simulator\nExec=AIR\nIcon=air\nType=Application\nCategories=Utility;" > bin/AIR.desktop
+        touch bin/air.png
+        
+        # Run the tool to bundle libraries and create a double-clickable .AppImage
+        ./linuxdeployqt.AppImage bin/AIR -unsupported-allow-new-glibc -appimage
+        
+        # Move the finished AppImage into the bin folder so GitHub saves it
+        mv AIR*.AppImage bin/ || true
 
-    - name: Build on macOS
+    # ==========================================
+    # 2. MAC: Build & Create a .DMG Installer
+    # ==========================================
+    - name: Build & Bundle on macOS
       if: runner.os == 'macOS'
       env:
-        # Apple requires this to ensure it works on older MacBooks
         MACOSX_DEPLOYMENT_TARGET: "11.0"
       run: |
         qmake
         make -j4
+        
+        # Use Qt's built-in Mac tool to bundle Frameworks and create a .dmg
+        macdeployqt bin/AIR.app -dmg
 
-    - name: Build on Windows
+    # ==========================================
+    # 3. WINDOWS: Build & Bundle .DLL files
+    # ==========================================
+    - name: Build & Bundle on Windows
       if: runner.os == 'Windows'
       shell: bash
       run: |
-        # 1. Force GitHub to use the official Qt MinGW compiler, NOT the generic Windows one!
         export PATH="${GITHUB_WORKSPACE}/Qt/Tools/mingw1120_64/bin:$PATH"
-        # 2. Create the exact folders your .pro file asks for
         mkdir -p bin build/obj build/moc
-        # 3. Compile!
+        
         qmake
         mingw32-make -j4
-    # --- THE FINAL REWARD: Save the compiled app so you can download it! ---
+        
+        # Use Qt's built-in Windows tool to pull all required DLLs into the bin folder
+        windeployqt bin/AIR.exe
+
+    # ==========================================
+    # 4. SAVE THE FINISHED APPS!
+    # ==========================================
     - name: Upload Application Artifacts
       uses: actions/upload-artifact@v4
       with:
