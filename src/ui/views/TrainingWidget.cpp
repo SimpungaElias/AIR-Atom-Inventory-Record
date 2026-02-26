@@ -2,7 +2,8 @@
 #include "../../db/DatabaseManager.h"
 #include <QMessageBox>
 #include <QFrame>
-#include <QTabWidget> // <--- REQUIRED FOR THE NEW UI
+#include <QTabWidget>
+#include <QRegularExpression>
 
 TrainingWidget::TrainingWidget(QWidget *parent) : QWidget(parent) {
     setupUI();
@@ -119,7 +120,7 @@ QWidget* TrainingWidget::createScenarioCard(QString title, QString desc, QString
     
     // We strip the HTML tags from 'desc' for the popup box so it looks clean
     QString cleanDesc = desc;
-    cleanDesc.remove(QRegExp("<[^>]*>"));
+    cleanDesc.remove(QRegularExpression("<[^>]*>"));
 
     connect(btnStart, &QPushButton::clicked, [this, id, cleanDesc](){
         launchScenario(id, cleanDesc);

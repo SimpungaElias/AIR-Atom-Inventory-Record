@@ -12,20 +12,25 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # THE FIX: We use older environments to ensure maximum backward compatibility!
         os: [ubuntu-22.04, windows-latest, macos-12]
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
 
+    # --- THE FIX: Install a real Python environment to bypass the Windows Store bug ---
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    # ---------------------------------------------------------------------------------
+
     - name: Install Qt 6
       uses: jurplel/install-qt-action@v3
       with:
-        version: '6.5.3' # THE FIX: Upgraded to Qt 6 LTS
+        version: '6.5.3' 
         host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'mac' || 'linux' }}
         target: 'desktop'
-        # Ensures Windows uses the MinGW compiler to match our Make commands below
         arch: ${{ runner.os == 'Windows' && 'win64_mingw' || '' }} 
 
     - name: Build on Linux & macOS
