@@ -341,7 +341,7 @@ bool DatabaseManager::deleteMBREntry(int id) {
 // =========================================================
 
 bool DatabaseManager::createBackup(const QString &title, const QString &description) {
-    // --- THE MAC FIX: Save backups safely to the Documents folder ---
+    // Save backups safely to the Documents folder
     QString backupDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/AIR_Backups";
     QDir().mkpath(backupDir);
 
@@ -376,7 +376,7 @@ bool DatabaseManager::restoreBackup(int backupId) {
     if(!q.exec() || !q.next()) return false;
     
     QString filename = q.value(0).toString();
-    // --- THE MAC FIX: Read backups safely from the Documents folder ---
+    // Read backups safely from the Documents folder
     QString backupPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/AIR_Backups/" + filename;
     QString currentDb = db.databaseName();
 
@@ -397,14 +397,18 @@ bool DatabaseManager::restoreBackup(int backupId) {
     }
 }
 
-// (The getBackups function stays exactly the same)
+// --- THIS WAS THE MISSING FUNCTION! ---
+QSqlQuery DatabaseManager::getBackups() {
+    return QSqlQuery("SELECT * FROM backups ORDER BY created_date DESC");
+}
+// --------------------------------------
 
 bool DatabaseManager::deleteBackup(int backupId) {
     QSqlQuery q;
     q.prepare("SELECT filename FROM backups WHERE id = ?");
     q.addBindValue(backupId);
     if(q.exec() && q.next()) {
-        // --- THE MAC FIX: Delete backups safely from the Documents folder ---
+        // Delete backups safely from the Documents folder
         QString path = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/AIR_Backups/" + q.value(0).toString();
         QFile::remove(path);
     }
