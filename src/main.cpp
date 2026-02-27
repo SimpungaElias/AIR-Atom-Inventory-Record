@@ -4,8 +4,39 @@
 #include <QApplication>
 #include <QDebug>
 
+// --- ADDED FOR MAC COLOR FIX ---
+#include <QStyleFactory>
+#include <QPalette>
+// -------------------------------
+
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
+
+// =========================================================================
+// MAC-ONLY FIX: Prevent Mac Dark Mode from turning the UI black.
+// Windows and Linux will completely ignore this block.
+// =========================================================================
+#ifdef Q_OS_MAC
+    a.setStyle(QStyleFactory::create("Fusion"));
+
+    QPalette lightPalette;
+    lightPalette.setColor(QPalette::Window, QColor(240, 240, 240));
+    lightPalette.setColor(QPalette::WindowText, Qt::black);
+    lightPalette.setColor(QPalette::Base, Qt::white);
+    lightPalette.setColor(QPalette::AlternateBase, QColor(240, 240, 240));
+    lightPalette.setColor(QPalette::ToolTipBase, Qt::white);
+    lightPalette.setColor(QPalette::ToolTipText, Qt::black);
+    lightPalette.setColor(QPalette::Text, Qt::black);
+    lightPalette.setColor(QPalette::Button, QColor(240, 240, 240));
+    lightPalette.setColor(QPalette::ButtonText, Qt::black);
+    lightPalette.setColor(QPalette::BrightText, Qt::red);
+    lightPalette.setColor(QPalette::Link, QColor(42, 130, 218));
+    lightPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
+    lightPalette.setColor(QPalette::HighlightedText, Qt::white);
+    
+    a.setPalette(lightPalette);
+#endif
+// =========================================================================
 
     // 1. INITIALIZE USER DATABASE
     // This creates the database file and the default admin user if missing.
