@@ -68,8 +68,15 @@ jobs:
         qmake
         make -j4
 
-        # Use Qt's built-in Mac tool to bundle Frameworks and create a .dmg
-        macdeployqt bin/AIR.app -dmg
+        # 1. Bundle Qt Frameworks into the app (without creating the dmg yet)
+        macdeployqt bin/AIR.app
+
+        # 2. --- THE FIX: Ad-Hoc Sign the app and all libraries so Gatekeeper behaves ---
+        codesign --force --deep --sign - bin/AIR.app
+        # -------------------------------------------------------------------------------
+
+        # 3. Manually create the .dmg installer to preserve the new signature
+        hdiutil create -volname "AIR Simulator" -srcfolder bin/AIR.app -ov -format UDZO bin/AIR.dmg
 
     # ==========================================
     # 3. WINDOWS: Build & Bundle .DLL files
