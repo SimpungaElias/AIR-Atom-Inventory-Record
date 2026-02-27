@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QSqlError>
 
+
 DatabaseManager& DatabaseManager::instance() {
     static DatabaseManager _instance;
     return _instance;
@@ -15,7 +16,12 @@ DatabaseManager& DatabaseManager::instance() {
 
 bool DatabaseManager::connect() {
     db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("air_inventory.db");
+    
+    // --- THE MAC FIX: Save inventory DB to the Documents folder ---
+    QString dbPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/air_inventory.db";
+    db.setDatabaseName(dbPath);
+    // --------------------------------------------------------------
+    
     if (!db.open()) {
         qCritical() << "DB Connection Error:" << db.lastError().text();
         return false;
@@ -335,7 +341,8 @@ bool DatabaseManager::deleteMBREntry(int id) {
 // =========================================================
 
 bool DatabaseManager::createBackup(const QString &title, const QString &description) {
-    QString backupDir = QCoreApplication::applicationDirPath() + "/backups";
+    // --- THE MAC FIX: Save backups safely to the Documents folder ---
+    QString backupDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/AIR_Backups";
     QDir().mkpath(backupDir);
 
     QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
@@ -369,7 +376,8 @@ bool DatabaseManager::restoreBackup(int backupId) {
     if(!q.exec() || !q.next()) return false;
     
     QString filename = q.value(0).toString();
-    QString backupPath = QCoreApplication::applicationDirPath() + "/backups/" + filename;
+    // --- THE MAC FIX: Read backups safely from the Documents folder ---
+    QString backupPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/AIR_Backups/" + filename;
     QString currentDb = db.databaseName();
 
     if(!QFile::exists(backupPath)) return false;
@@ -389,16 +397,15 @@ bool DatabaseManager::restoreBackup(int backupId) {
     }
 }
 
-QSqlQuery DatabaseManager::getBackups() {
-    return QSqlQuery("SELECT * FROM backups ORDER BY created_date DESC");
-}
+// (The getBackups function stays exactly the same)
 
 bool DatabaseManager::deleteBackup(int backupId) {
     QSqlQuery q;
     q.prepare("SELECT filename FROM backups WHERE id = ?");
     q.addBindValue(backupId);
     if(q.exec() && q.next()) {
-        QString path = QCoreApplication::applicationDirPath() + "/backups/" + q.value(0).toString();
+        // --- THE MAC FIX: Delete backups safely from the Documents folder ---
+        QString path = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/AIR_Backups/" + q.value(0).toString();
         QFile::remove(path);
     }
     
@@ -617,8 +624,12 @@ void DatabaseManager::resetToRealDatabase() {
     if (db.isOpen()) {
         db.close();
     }
-    QString realDbPath = "air_inventory.db"; 
+    
+    // --- THE MAC FIX: Ensure it reconnects to the Documents folder ---
+    QString realDbPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/air_inventory.db"; 
     db.setDatabaseName(realDbPath);
+    // -----------------------------------------------------------------
+    
     if (!db.open()) {
         qCritical() << "Error: Could not reconnect to real database:" << db.lastError().text();
     } else {

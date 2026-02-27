@@ -1,4 +1,6 @@
 #include "UserDatabaseManager.h"
+#include <QStandardPaths>
+#include <QDir>
 
 UserDatabaseManager& UserDatabaseManager::instance() {
     static UserDatabaseManager _instance;
@@ -11,7 +13,11 @@ bool UserDatabaseManager::connect() {
         db = QSqlDatabase::database("UserDBConnection");
     } else {
         db = QSqlDatabase::addDatabase("QSQLITE", "UserDBConnection");
-        db.setDatabaseName("air_users.db"); // SEPARATE DATABASE FILE
+        
+        // --- THE MAC FIX: Save users DB to the Documents folder ---
+        QString dbPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/air_users.db";
+        db.setDatabaseName(dbPath); 
+        // ----------------------------------------------------------
     }
 
     if (!db.open()) {
