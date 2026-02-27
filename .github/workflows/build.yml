@@ -47,7 +47,7 @@ jobs:
         cp bin/AIR AppDir/usr/bin/
 
         echo -e "[Desktop Entry]\nName=AIR Simulator\nExec=AIR\nIcon=air\nType=Application\nCategories=Utility;" > AppDir/AIR.desktop
-        touch AppDir/air.png
+        cp icons/air.png AppDir/
 
         export VERSION=1.0.0
 
