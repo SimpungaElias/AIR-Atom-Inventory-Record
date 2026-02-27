@@ -57,6 +57,16 @@ macx {
     QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64
 }
 
+# --- SET THE APPLICATION ICONS ---
+macx {
+    ICON = icons/air.icns
+}
+
+win32 {
+    RC_ICONS = icons/air.ico
+}
+# --------------------------------
+
 # Output Setup
 DESTDIR = bin
 OBJECTS_DIR = build/obj
