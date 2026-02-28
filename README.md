@@ -14,4 +14,4 @@ AIR is a cross-platform desktop application designed for Nuclear Material Accoun
 3. On the first launch, the system will generate a fresh database. Log in using the default credentials:
    * **Username:** admin
    * **Password:** Admin@123
-4. **Important:** Navigate to the Administration tab immediately to change this password and create profiles for your operators.
+4. **Important:** Navigate to the Administration tab immediately to create profiles for your operators based on priveleges.
