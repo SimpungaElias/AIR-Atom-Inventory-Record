@@ -1,0 +1,123 @@
+name: Publish Release
+
+# 1. Trigger this workflow ONLY when you push a version tag (e.g., v1.0.0)
+on:
+  push:
+    tags:
+      - 'v*' 
+
+# 2. Grant permissions to create a release on your repository
+permissions:
+  contents: write 
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-latest]
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install Qt 6
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.3'
+        host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'mac' || 'linux' }}
+        target: 'desktop'
+        arch: ${{ runner.os == 'Windows' && 'win64_mingw' || '' }}
+
+    # ==========================================
+    # LINUX: Build & Create an AppImage
+    # ==========================================
+    - name: Build & Bundle on Ubuntu
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxcb-cursor0
+        qmake
+        make -j4
+        wget -q -O linuxdeployqt.AppImage "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+        chmod +x linuxdeployqt.AppImage
+        
+        mkdir -p AppDir/usr/bin
+        cp bin/AIR AppDir/usr/bin/
+        echo -e "[Desktop Entry]\nName=AIR Simulator\nExec=AIR\nIcon=air\nType=Application\nCategories=Education;" > AppDir/AIR.desktop
+        cp icons/air.png AppDir/ 
+        
+        export VERSION=${GITHUB_REF_NAME} 
+        ./linuxdeployqt.AppImage AppDir/usr/bin/AIR -unsupported-allow-new-glibc -appimage
+        
+        # Rename the final file for the release
+        mv AIR*.AppImage AIR-Simulator-Linux.AppImage
+
+    # ==========================================
+    # MAC: Build, Ad-Hoc Sign, & Create .DMG
+    # ==========================================
+    - name: Build & Bundle on macOS
+      if: runner.os == 'macOS'
+      env:
+        MACOSX_DEPLOYMENT_TARGET: "11.0"
+      run: |
+        qmake
+        make -j4
+        macdeployqt bin/AIR.app
+        codesign --force --deep --sign - bin/AIR.app
+        
+        # Create DMG and save it directly to the root for the release
+        hdiutil create -volname "AIR Simulator" -srcfolder bin/AIR.app -ov -format UDZO AIR-Simulator-Mac.dmg
+
+    # ==========================================
+    # WINDOWS: Build & Zip with DLLs
+    # ==========================================
+    - name: Build & Bundle on Windows
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        export PATH="${GITHUB_WORKSPACE}/Qt/Tools/mingw1120_64/bin:$PATH"
+        mkdir -p bin build/obj build/moc
+        qmake
+        mingw32-make -j4
+        windeployqt bin/AIR.exe
+        
+        # Zip the entire bin folder so Windows users get all the required DLLs
+        7z a AIR-Simulator-Windows.zip ./bin/*
+
+    # ==========================================
+    # UPLOAD FILES TO TEMPORARY STORAGE
+    # ==========================================
+    - name: Store Release Assets
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-asset-${{ matrix.os }}
+        path: |
+          AIR-Simulator-Linux.AppImage
+          AIR-Simulator-Mac.dmg
+          AIR-Simulator-Windows.zip
+        if-no-files-found: ignore
+
+  # ==========================================
+  # PUBLISH THE ACTUAL GITHUB RELEASE
+  # ==========================================
+  publish:
+    name: Publish to GitHub Releases
+    needs: build # Wait for Mac, Windows, and Linux to finish
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download all assets
+      uses: actions/download-artifact@v4
+      with:
+        path: release-assets
+        pattern: release-asset-*
+        merge-multiple: true
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: release-assets/*
+        generate_release_notes: true
+        draft: false
+        prerelease: false
