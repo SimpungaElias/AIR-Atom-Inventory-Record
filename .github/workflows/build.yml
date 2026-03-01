@@ -42,7 +42,6 @@ jobs:
         wget -q -O linuxdeployqt.AppImage "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
         chmod +x linuxdeployqt.AppImage
 
-        # --- THE FIX: Create a strict AppDir container so it can't get lost ---
         mkdir -p AppDir/usr/bin
         cp bin/AIR AppDir/usr/bin/
 
@@ -54,8 +53,9 @@ jobs:
         # Run the tool on our isolated AppDir container
         ./linuxdeployqt.AppImage AppDir/usr/bin/AIR -unsupported-allow-new-glibc -appimage
 
-        # Move the finished AppImage into the bin folder so GitHub saves it
-        mv AIR*.AppImage bin/ || true
+        # --- THE FIX: Move ONLY the AppImage to a clean folder ---
+        mkdir -p release-build
+        mv AIR*.AppImage release-build/AIR-Simulator-Linux.AppImage || true
 
     # ==========================================
     # 2. MAC: Build & Create a .DMG Installer
@@ -68,15 +68,13 @@ jobs:
         qmake
         make -j4
 
-        # 1. Bundle Qt Frameworks into the app (without creating the dmg yet)
         macdeployqt bin/AIR.app
 
-        # 2. --- THE FIX: Ad-Hoc Sign the app and all libraries so Gatekeeper behaves ---
         codesign --force --deep --sign - bin/AIR.app
-        # -------------------------------------------------------------------------------
 
-        # 3. Manually create the .dmg installer to preserve the new signature
-        hdiutil create -volname "AIR Simulator" -srcfolder bin/AIR.app -ov -format UDZO bin/AIR.dmg
+        # --- THE FIX: Create the DMG directly into a clean folder ---
+        mkdir -p release-build
+        hdiutil create -volname "AIR Simulator" -srcfolder bin/AIR.app -ov -format UDZO release-build/AIR-Simulator-Mac.dmg
 
     # ==========================================
     # 3. WINDOWS: Build & Bundle .DLL files
@@ -91,14 +89,17 @@ jobs:
         qmake
         mingw32-make -j4
 
-        # Use Qt's built-in Windows tool to pull all required DLLs into the bin folder
         windeployqt bin/AIR.exe
 
+        # --- THE FIX: Zip the Windows files into a clean folder ---
+        mkdir -p release-build
+        7z a release-build/AIR-Simulator-Windows.zip ./bin/*
+
     # ==========================================
-    # 4. SAVE THE FINISHED APPS!
+    # 4. SAVE ONLY THE FINISHED APPS!
     # ==========================================
     - name: Upload Application Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: AIR-Simulator-${{ matrix.os }}
-        path: bin/
+        path: release-build/
