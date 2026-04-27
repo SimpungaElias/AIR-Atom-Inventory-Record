@@ -1,16 +1,23 @@
 #include "ui/MainWindow.h"
-#include "src/ui/dialogs/LoginDialog.h" 
-#include "db/UserDatabaseManager.h" // <--- CRITICAL INCLUDE
+#include "ui/dialogs/LoginDialog.h"
+#include "ui/dialogs/AIR_SplashScreen.h"
+#include "db/UserDatabaseManager.h"
 #include <QApplication>
+#include <QSettings>
 #include <QDebug>
 
-// --- ADDED FOR MAC COLOR FIX ---
+// --- MAC COLOR FIX ---
 #include <QStyleFactory>
 #include <QPalette>
-// -------------------------------
+// ---------------------
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
+
+    // App metadata — used by QSettings to persist splash screen preference
+    a.setApplicationName("AIR");
+    a.setApplicationVersion("1.0.0");
+    a.setOrganizationName("AIR_System");
 
 // =========================================================================
 // MAC-ONLY FIX: Prevent Mac Dark Mode from turning the UI black.
@@ -33,7 +40,7 @@ int main(int argc, char *argv[]) {
     lightPalette.setColor(QPalette::Link, QColor(42, 130, 218));
     lightPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
     lightPalette.setColor(QPalette::HighlightedText, Qt::white);
-    
+
     a.setPalette(lightPalette);
 #endif
 // =========================================================================
@@ -45,22 +52,39 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    // 2. SHOW SPLASH SCREEN (respects user's "don't show again" preference)
+    QSettings settings;
+    bool showSplash = settings.value("showSplash", true).toBool();
+
+    if (showSplash) {
+        AIRSplashScreen splash;
+        int result = splash.exec();
+
+        // Persist the checkbox state for next launch
+        settings.setValue("showSplash", splash.shouldShowOnStartup());
+
+        // If user clicked Exit on the splash screen, quit immediately
+        if (result != QDialog::Accepted) {
+            return 0;
+        }
+    }
+
+    // 3. LOGIN → MAIN WINDOW LOOP
     while (true) {
-        // 2. Show Login Dialog
+        // Show Login Dialog
         LoginDialog login;
         if (login.exec() != QDialog::Accepted) {
             return 0; // User closed/cancelled login, exit app
         }
 
-        // 3. Show Main Window
+        // Show Main Window
         MainWindow w;
         w.setUserRole(login.getRole()); // Pass the role (Administrator/Operator)
         w.show();
 
-        // 4. Loop Logic for Logout
+        // Loop Logic for Logout
         bool logoutClicked = false;
-        
-        // Connect the signal from MainWindow to our local boolean
+
         QObject::connect(&w, &MainWindow::logoutRequested, [&](){
             logoutClicked = true;
             w.close(); // Close window to break the a.exec() loop below
@@ -69,9 +93,9 @@ int main(int argc, char *argv[]) {
         a.exec(); // Blocks here until the main window is closed
 
         if (!logoutClicked) {
-            break; // User closed with 'X', so break the loop and exit completely
+            break; // User closed with 'X', exit completely
         }
-        // If logoutClicked is true, the loop repeats -> New LoginDialog appears
+        // If logoutClicked is true, loop repeats → new LoginDialog appears
     }
 
     return 0;
