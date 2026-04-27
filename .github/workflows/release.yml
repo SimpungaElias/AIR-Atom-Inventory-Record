@@ -1,14 +1,12 @@
 name: Publish Release
 
-# 1. Trigger this workflow ONLY when you push a version tag (e.g., v1.0.0)
 on:
   push:
     tags:
-      - 'v*' 
+      - 'v*'
 
-# 2. Grant permissions to create a release on your repository
 permissions:
-  contents: write 
+  contents: write
 
 jobs:
   build:
@@ -30,9 +28,7 @@ jobs:
         target: 'desktop'
         arch: ${{ runner.os == 'Windows' && 'win64_mingw' || '' }}
 
-    # ==========================================
-    # LINUX: Build & Create an AppImage
-    # ==========================================
+    # ── LINUX ──────────────────────────────────────────────────────────────
     - name: Build & Bundle on Ubuntu
       if: runner.os == 'Linux'
       run: |
@@ -42,21 +38,15 @@ jobs:
         make -j4
         wget -q -O linuxdeployqt.AppImage "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
         chmod +x linuxdeployqt.AppImage
-        
         mkdir -p AppDir/usr/bin
         cp bin/AIR AppDir/usr/bin/
         echo -e "[Desktop Entry]\nName=AIR Simulator\nExec=AIR\nIcon=air\nType=Application\nCategories=Education;" > AppDir/AIR.desktop
-        cp icons/air.png AppDir/ 
-        
-        export VERSION=${GITHUB_REF_NAME} 
+        cp icons/air.png AppDir/
+        export VERSION=${GITHUB_REF_NAME}
         ./linuxdeployqt.AppImage AppDir/usr/bin/AIR -unsupported-allow-new-glibc -appimage
-        
-        # Rename the final file for the release
         mv AIR*.AppImage AIR-Simulator-Linux.AppImage
 
-    # ==========================================
-    # MAC: Build, Ad-Hoc Sign, & Create .DMG
-    # ==========================================
+    # ── MACOS ──────────────────────────────────────────────────────────────
     - name: Build & Bundle on macOS
       if: runner.os == 'macOS'
       env:
@@ -66,13 +56,9 @@ jobs:
         make -j4
         macdeployqt bin/AIR.app
         codesign --force --deep --sign - bin/AIR.app
-        
-        # Create DMG and save it directly to the root for the release
         hdiutil create -volname "AIR Simulator" -srcfolder bin/AIR.app -ov -format UDZO AIR-Simulator-Mac.dmg
 
-    # ==========================================
-    # WINDOWS: Build & Zip with DLLs
-    # ==========================================
+    # ── WINDOWS ────────────────────────────────────────────────────────────
     - name: Build & Bundle on Windows
       if: runner.os == 'Windows'
       shell: bash
@@ -82,13 +68,9 @@ jobs:
         qmake
         mingw32-make -j4
         windeployqt bin/AIR.exe
-        
-        # Zip the entire bin folder so Windows users get all the required DLLs
         7z a AIR-Simulator-Windows.zip ./bin/*
 
-    # ==========================================
-    # UPLOAD FILES TO TEMPORARY STORAGE
-    # ==========================================
+    # ── UPLOAD ARTIFACTS ───────────────────────────────────────────────────
     - name: Store Release Assets
       uses: actions/upload-artifact@v4
       with:
@@ -99,12 +81,10 @@ jobs:
           AIR-Simulator-Windows.zip
         if-no-files-found: ignore
 
-  # ==========================================
-  # PUBLISH THE ACTUAL GITHUB RELEASE
-  # ==========================================
+  # ── PUBLISH ────────────────────────────────────────────────────────────────
   publish:
     name: Publish to GitHub Releases
-    needs: build # Wait for Mac, Windows, and Linux to finish
+    needs: build
     runs-on: ubuntu-latest
     steps:
     - name: Download all assets
@@ -114,10 +94,19 @@ jobs:
         pattern: release-asset-*
         merge-multiple: true
 
+    - name: List downloaded files   # ← helps debug if files are missing
+      run: ls -la release-assets/
+
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        files: release-assets/*
+        name: "AIR Simulator ${{ github.ref_name }}"
+        tag_name: ${{ github.ref_name }}
+        files: |
+          release-assets/AIR-Simulator-Linux.AppImage
+          release-assets/AIR-Simulator-Mac.dmg
+          release-assets/AIR-Simulator-Windows.zip
         generate_release_notes: true
         draft: false
         prerelease: false
+        fail_on_unmatched_files: false
