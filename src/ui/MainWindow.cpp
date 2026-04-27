@@ -11,10 +11,14 @@
 #include "views/TrainingWidget.h"
 #include "views/MBRWidget.h"
 
+#include "dialogs/AIR_SplashScreen.h"
+
+#include <QSettings>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QPixmap>
 #include <QStyle>
 #include <QFile>
 #include <QTextStream>
@@ -74,7 +78,7 @@ void MainWindow::setupUI() {
     connect(mbrWidget, &MBRWidget::dataChanged, homeWidget, &HomeWidget::refreshData);
     
     // --- SCENARIO START LOGIC ---
-    connect(trainingWidget, &TrainingWidget::scenarioStarted, [this](QString name){
+    connect(trainingWidget, &TrainingWidget::scenarioStarted, [this](QString /*name*/){
         btnQuitScenario->setVisible(true);
         btnQuitScenario->setText("Exit Simulation");
 
@@ -124,17 +128,20 @@ void MainWindow::setupHeader(QVBoxLayout *layout) {
     QHBoxLayout *brandLay = new QHBoxLayout(brandBox);
     brandLay->setContentsMargins(20, 10, 20, 10);
     
-    // LEFT: Logo & Title
-    QLabel *logo = new QLabel("AIR"); 
+    // LEFT: Logo Image (Shield & Atom branding)
+    QLabel *logo = new QLabel();
     logo->setObjectName("LogoLabel");
-    logo->setStyleSheet("font-size: 25px; font-weight: bold; color: #003366; margin-right: 10px; border: none; text-decoration: none;");
-    
-    QLabel *sub = new QLabel("Atom Inventory Record"); 
-    sub->setObjectName("SubLabel");
-    sub->setStyleSheet("font-size: 17px; font-weight: bold; color: #555; border: none; text-decoration: none;");
-    
+    QPixmap logoPixmap(":/icons/air_logo.png");
+    if (!logoPixmap.isNull()) {
+        logo->setPixmap(logoPixmap.scaledToHeight(55, Qt::SmoothTransformation));
+    } else {
+        // Fallback to text if image not found
+        logo->setText("AIR - Atom Inventory Record");
+        logo->setStyleSheet("font-size: 20px; font-weight: bold; color: #003366; border: none;");
+    }
+    logo->setStyleSheet("border: none; background: transparent;");
+
     brandLay->addWidget(logo);
-    brandLay->addWidget(sub); 
     brandLay->addStretch();
 
     // LOGOUT
@@ -192,7 +199,6 @@ void MainWindow::setupHeader(QVBoxLayout *layout) {
     QPushButton *btnOps = createNavBtn("Operations");
     QMenu *opsMenu = new QMenu(btnOps);
     
-    // --- FIX: Added MBR to the very top of the menu, linking to index 8 ---
     opsMenu->addAction("Material Balance Report (MBR)", [this, btnOps, updateActiveBtn](){ switchView(8); updateActiveBtn(btnOps); });
     opsMenu->addAction("Inventory Change Report (ICR)", [this, btnOps, updateActiveBtn](){ switchView(1); receiptWidget->refreshTable(); updateActiveBtn(btnOps); });
     opsMenu->addAction("List of Inventory Items (LII)", [this, btnOps, updateActiveBtn](){ switchView(5); updateActiveBtn(btnOps); });
@@ -225,8 +231,20 @@ void MainWindow::setupHeader(QVBoxLayout *layout) {
     btnAdmin->setMenu(adminMenu);
     adminMenu->setStyleSheet("QMenu { background-color: #003366; color: white; } QMenu::item { padding: 8px 20px; } QMenu::item:selected { background-color: #002244; }");
     navLay->addWidget(btnAdmin);
+    
+    adminMenu->addAction("Show Intro Screen", [this](){
+    // Re-enable splash for next startup before showing it
+    QSettings settings;
+    settings.setValue("showSplash", true);
 
-    // 5. QUIT SCENARIO BUTTON (Hidden margin logic)
+    AIRSplashScreen splash;
+    splash.exec();
+
+    // After dialog closes, save whatever the checkbox says
+    settings.setValue("showSplash", splash.shouldShowOnStartup());
+});
+
+    // 5. QUIT SCENARIO BUTTON (Hidden by default)
     btnQuitScenario = new QPushButton("Exit Simulation");
     btnQuitScenario->setVisible(false); 
     btnQuitScenario->setCursor(Qt::PointingHandCursor);
@@ -249,14 +267,11 @@ void MainWindow::quitScenario() {
                                   QMessageBox::Yes|QMessageBox::No);
     
     if (reply == QMessageBox::Yes) {
-        // 1. SWITCH DATABASE ENGINE FIRST
         DatabaseManager::instance().resetToRealDatabase();
 
-        // 2. UI RESET
         setWindowTitle("AIR - Atom Inventory Record");
         btnQuitScenario->setVisible(false);
         
-        // Reset Header Style
         QWidget *nav = this->findChild<QWidget*>("NavContainer");
         if(nav) {
             nav->setStyleSheet(
@@ -267,15 +282,13 @@ void MainWindow::quitScenario() {
             );
         }
 
-        // 3. FORCE REFRESH OF ALL WIDGETS
-        homeWidget->refreshData();    // Reloads GL Summary on Home
-        glWidget->refreshData();      // Reloads detailed GL
-        receiptWidget->refreshTable(); // Reloads Receipts table
-        liiWidget->loadData();        // Reloads LII
+        homeWidget->refreshData();
+        glWidget->refreshData();
+        receiptWidget->refreshTable();
+        liiWidget->loadData();
         nliWidget->loadData();
         mbrWidget->loadData();
         
-        // 4. Navigate Home
         switchView(0);
         
         QMessageBox::information(this, "Standard Mode", "Operational data restored.");
