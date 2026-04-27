@@ -43,10 +43,13 @@ private:
     QLineEdit *txtUnit;
 
     // Transaction Entry Fields
-    QDateEdit *dateEdit;
-    QLineEdit *txtRef;
-    QComboBox *comboCode, *comboType; 
+    QDateEdit      *dateEdit;
+    QLineEdit      *txtRef;
+    QComboBox      *comboCode;
+    QComboBox      *comboType;
+    QComboBox      *comboElem;
     QDoubleSpinBox *spinElem, *spinIso;
+    QLabel         *lblIsoField;
     
     // Display
     QTableWidget *table;
