@@ -1,5 +1,9 @@
 <RCC>
     <qresource prefix="/">
         <file>resources/styles/main.qss</file>
+        <file>icons/air_logo.png</file>
+        <file>docs/AIR-User-Manual.pdf</file>
+        <file>docs/INFCIRC153.pdf</file>
+        <file>docs/Code-10.pdf</file>
     </qresource>
 </RCC>
