@@ -8,7 +8,9 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QDoubleSpinBox>
+#include <QSpinBox>
 #include <QGroupBox>
+#include <QCompleter>
 
 class MBRWidget : public QWidget {
     Q_OBJECT
@@ -16,43 +18,41 @@ public:
     explicit MBRWidget(QWidget *parent = nullptr);
     void loadData();
 
-// --- CRITICAL SECTION: THIS MUST EXIST ---
 signals:
-    void dataChanged(); 
-// ---------------------------------------
+    void dataChanged();
 
 private slots:
-    void addEntry();       
-    void deleteEntry();    
+    void addEntry();
+    void deleteEntry();
     void exportPDF();
 
 private:
     void setupUI();
     void setupHeader();
-    void setupInputForm(); 
+    void setupInputForm();
     void setupTable();
 
-    // Report Header Fields
-    QLineEdit *txtCountry;
-    QLineEdit *txtFacility;
-    QComboBox *comboMBA;
-    QDateEdit *dateFrom;
-    QDateEdit *dateTo;
-    QLineEdit *txtReportNo;
+    // ── Report Header Fields ──────────────────────────────────────────────
+    QComboBox   *comboCountry;      // Full IAEA country list, searchable
+    QLineEdit   *txtFacility;       // Editable with placeholder
+    QComboBox   *comboMBA;          // Editable + saveable
+    QDateEdit   *dateFrom;
+    QDateEdit   *dateTo;
+    QSpinBox    *spinReportNo;      // Number only (was QLineEdit)
 
-    // Entry Form Fields
-    QLineEdit *txtContinuation;
-    QComboBox *comboEntryName;
-    QComboBox *comboElement;
+    // ── Entry Form Fields ─────────────────────────────────────────────────
+    QLineEdit   *txtContinuation;
+    QComboBox   *comboEntryName;
+    QComboBox   *comboElement;
     QDoubleSpinBox *spinWeight;
-    QComboBox *comboUnit;
+    QComboBox   *comboUnit;
     QDoubleSpinBox *spinFissile;
-    QLineEdit *txtIsotopeCode;
-    QLineEdit *txtEntryReportNo;
+    QComboBox   *comboIsotopeCode;  // Selectable (was QLineEdit)
+    QSpinBox    *spinEntryReportNo; // Number only (was QLineEdit)
 
-    // Table and Buttons
+    // ── Table and Buttons ─────────────────────────────────────────────────
     QTableWidget *table;
-    QPushButton *btnExport;
+    QPushButton  *btnExport;
 };
 
 #endif // MBRWIDGET_H
