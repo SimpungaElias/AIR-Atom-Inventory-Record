@@ -23,6 +23,7 @@ HEADERS += \
     src/ui/views/GeneralLedgerWidget.h \
     src/db/UserDatabaseManager.h \
     src/ui/dialogs/LoginDialog.h \
+    src/ui/dialogs/AIR_SplashScreen.h \
     src/ui/views/MaterialCodeDialog.h \
     src/ui/views/AdminWidget.h \
     src/ui/views/BackupRestoreWidget.h \
@@ -44,6 +45,7 @@ SOURCES += \
     src/ui/views/GeneralLedgerWidget.cpp \
     src/db/UserDatabaseManager.cpp \
     src/ui/dialogs/LoginDialog.cpp \
+    src/ui/dialogs/AIR_SplashScreen.cpp \
     src/ui/views/AdminWidget.cpp \
     src/ui/views/BackupRestoreWidget.cpp \
     src/ui/views/LIIWidget.cpp \
