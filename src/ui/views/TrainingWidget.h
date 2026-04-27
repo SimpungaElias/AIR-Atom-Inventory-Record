@@ -4,8 +4,11 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QGridLayout>
+#include <QFrame>
+#include <QStringList>
 
 class TrainingWidget : public QWidget {
     Q_OBJECT
@@ -14,14 +17,24 @@ public:
     explicit TrainingWidget(QWidget *parent = nullptr);
 
 signals:
-    void scenarioStarted(QString name); // Signal to tell MainWindow to refresh UI
+    void scenarioStarted(QString name);
 
 private slots:
     void launchScenario(QString name, QString description);
 
 private:
     void setupUI();
-    QWidget* createScenarioCard(QString title, QString desc, QString difficulty, QString id);
+
+    // Updated signature: includes objectives, duration, prerequisites
+    QWidget* createScenarioCard(
+        const QString &title,
+        const QString &desc,
+        const QStringList &objectives,
+        const QString &difficulty,
+        const QString &duration,
+        const QString &prereq,
+        const QString &id
+    );
 };
 
 #endif // TRAININGWIDGET_H
