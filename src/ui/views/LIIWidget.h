@@ -1,6 +1,5 @@
 #ifndef LIIWIDGET_H
 #define LIIWIDGET_H
-
 #include <QWidget>
 #include <QLineEdit>
 #include <QComboBox>
@@ -12,45 +11,34 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QDateEdit>
+#include <QCompleter>
 
 class LIIWidget : public QWidget {
     Q_OBJECT
-
 public:
     explicit LIIWidget(QWidget *parent = nullptr);
-    void loadData(); 
-
+    void loadData();
 private slots:
     void addItem();
     void exportPDF();
     void deleteItem();
-    void openMaterialCodeSelector(); // <--- NEW SLOT
-
+    void openMaterialCodeSelector();
 private:
     void setupUI();
     void setupReportHeader(QVBoxLayout *layout);
     void setupInputForm(QVBoxLayout *layout);
     void setupTable(QVBoxLayout *layout);
-
-    // Header Inputs
-    QLineEdit *txtCountry;
-    QLineEdit *txtFacility;
-    QLineEdit *txtMBA;
-    QDateEdit *dateReport;
-    QSpinBox *spinReportNo;
-
-    // Item Inputs
-    QComboBox *comboKMP;
-    QLineEdit *txtPosition;
-    QLineEdit *txtBatch;
-    QLineEdit *txtMaterialCode; // <--- RENAMED from txtDesc for clarity
-    QDoubleSpinBox *spinElem;
-    QDoubleSpinBox *spinFissile;
-    QDoubleSpinBox *spinPu;
-    QDoubleSpinBox *spinBurnup;
-
+    QComboBox    *comboCountry;   // searchable IAEA list
+    QLineEdit    *txtFacility;
+    QComboBox    *comboMBA;
+    QDateEdit    *dateReport;
+    QSpinBox     *spinReportNo;   // number only
+    QComboBox    *comboKMP;
+    QLineEdit    *txtPosition;
+    QLineEdit    *txtBatch;
+    QLineEdit    *txtMaterialCode;
+    QDoubleSpinBox *spinElem, *spinFissile, *spinPu, *spinBurnup;
     QTableWidget *table;
     int itemCounter;
 };
-
-#endif // LIIWIDGET_H
+#endif
