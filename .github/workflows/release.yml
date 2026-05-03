@@ -53,6 +53,7 @@ jobs:
         MACOSX_DEPLOYMENT_TARGET: "11.0"
       run: |
         qmake
+        make clean
         make -j4
         macdeployqt bin/AIR.app
         codesign --force --deep --sign - bin/AIR.app
