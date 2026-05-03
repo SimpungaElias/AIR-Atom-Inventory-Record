@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = AIR
-QT += core gui widgets sql printsupport
+QT += core gui widgets sql printsupport svg
 
 CONFIG += c++17
 
