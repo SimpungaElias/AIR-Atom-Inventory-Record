@@ -131,6 +131,7 @@ void MainWindow::setupHeader(QVBoxLayout *layout) {
     // LEFT: Logo Image (Shield & Atom branding)
     QLabel *logo = new QLabel();
     logo->setObjectName("LogoLabel");
+    logo->setStyleSheet("border: none; background: transparent;");
     QPixmap logoPixmap(":/icons/air_logo.png");
     if (!logoPixmap.isNull()) {
         logo->setPixmap(logoPixmap.scaledToHeight(55, Qt::SmoothTransformation));
@@ -139,7 +140,6 @@ void MainWindow::setupHeader(QVBoxLayout *layout) {
         logo->setText("AIR - Atom Inventory Record");
         logo->setStyleSheet("font-size: 20px; font-weight: bold; color: #003366; border: none;");
     }
-    logo->setStyleSheet("border: none; background: transparent;");
 
     brandLay->addWidget(logo);
     brandLay->addStretch();
