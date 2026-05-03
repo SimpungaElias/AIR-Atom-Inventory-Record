@@ -9,6 +9,8 @@
 #include <QFile>
 #include <QDir>
 #include <QMessageBox>
+#include <QSvgRenderer>
+#include <QPainter>
 
 // ============================================================
 // EXACT AIR PROGRAM COLORS
@@ -180,14 +182,25 @@ void AIRSplashScreen::buildPage0_Welcome() {
 
     // Logo
     QLabel *logo = new QLabel;
-    logo->setStyleSheet("border: none;");
-    QPixmap px(":/icons/air_logo.png");
-    if (!px.isNull()) {
-        logo->setPixmap(px.scaledToWidth(300, Qt::SmoothTransformation));
-    } else {
-        logo->setText("AIR");
-        logo->setStyleSheet("color: #003366; font-size: 48pt; font-weight: bold;");
-    }
+    logo->setStyleSheet("border: none; background: transparent;");
+    logo->setFixedWidth(300);
+    QSvgRenderer splashRenderer(QString(":/icons/air_logo.svg"));
+if (splashRenderer.isValid()) {
+    qreal dpr = QApplication::primaryScreen()->devicePixelRatio();
+    int w = qRound(300 * dpr);
+    int h = qRound(w * splashRenderer.defaultSize().height()
+                     / (double)splashRenderer.defaultSize().width());
+    QPixmap px(w, h);
+    px.fill(Qt::transparent);
+    QPainter painter(&px);
+    splashRenderer.render(&painter);
+    painter.end();
+    px.setDevicePixelRatio(dpr);
+    logo->setPixmap(px);
+} else {
+    logo->setText("AIR");
+    logo->setStyleSheet("color: #003366; font-size: 48pt; font-weight: bold;");
+}
     logo->setAlignment(Qt::AlignCenter);
     lay->addWidget(logo);
 
