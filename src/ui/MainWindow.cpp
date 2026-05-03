@@ -26,6 +26,9 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QDebug>
+#include <QSvgRenderer>
+#include <QPainter>
+#include <QScreen>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     DatabaseManager::instance().connect(); 
@@ -130,17 +133,29 @@ void MainWindow::setupHeader(QVBoxLayout *layout) {
     
     // LEFT: Logo Image (Shield & Atom branding)
     QLabel *logo = new QLabel();
-    logo->setObjectName("LogoLabel");
-    logo->setStyleSheet("border: none; background: transparent;");
-    QPixmap logoPixmap(":/icons/air_logo.png");
-    if (!logoPixmap.isNull()) {
-        logo->setPixmap(logoPixmap.scaledToHeight(55, Qt::SmoothTransformation));
-    } else {
-        // Fallback to text if image not found
-        logo->setText("AIR - Atom Inventory Record");
-        logo->setStyleSheet("font-size: 20px; font-weight: bold; color: #003366; border: none;");
-    }
+logo->setObjectName("LogoLabel");
+logo->setStyleSheet("border: none; background: transparent;");
 
+QSvgRenderer renderer(QString(":/icons/air_logo.svg"));
+if (renderer.isValid()) {
+    // Render at 2x for crisp Retina/HiDPI display on all platforms
+    qreal dpr = QApplication::primaryScreen()->devicePixelRatio();
+    int h = qRound(55 * dpr);
+    int w = qRound(h * renderer.defaultSize().width()
+                     / (double)renderer.defaultSize().height());
+    QPixmap logoPixmap(w, h);
+    logoPixmap.fill(Qt::transparent);
+    QPainter painter(&logoPixmap);
+    renderer.render(&painter);
+    painter.end();
+    logoPixmap.setDevicePixelRatio(dpr);
+    logo->setPixmap(logoPixmap);
+    logo->setFixedHeight(55);
+} else {
+    logo->setText("AIR - Atom Inventory Record");
+    logo->setStyleSheet("font-size: 20px; font-weight: bold; color: #003366; border: none;");
+}
+    
     brandLay->addWidget(logo);
     brandLay->addStretch();
 
